@@ -66,7 +66,7 @@ def register_routes(app):
         auth = EntraLogin()
         access = auth.callback(data)
 
-        return access
+        # return access
 
     @app.route("/sign-out")
     def sign_out():
