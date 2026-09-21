@@ -1,12 +1,13 @@
 import type { Deps } from "#src/journeys/api.js";
 import { type EffectFunctionExpr, type EffectFunctionContext, EffectRegistry } from "@ministryofjustice/hmpps-forge/core/authoring";
-import { FIRST_PAGE, getAuthenticatedAxios, getPageNumberFromQuery, getSearchParamFromAnswers, setPaginatedSearchData, SEARCH_PAGE_SIZE } from "#src/journeys/helpers/effectHelpers.js";
+import { FIRST_PAGE, getAuthenticatedAxios, getPageNumberFromQuery, getSearchParamFromAnswers, setPaginatedSearchData, SEARCH_PAGE_SIZE, getCreateCasePayloadFromAnswers } from "#src/journeys/helpers/effectHelpers.js";
 
 
 export interface InboundCallEffectShape {
     GetAllCases: () => EffectFunctionExpr;
     SearchCase: () => EffectFunctionExpr;
     SearchCasePagination: () => EffectFunctionExpr;
+    CreateCase: () => EffectFunctionExpr;
 }
 
 type InboundCallEffectsImplementation = (deps: Deps) => (context: EffectFunctionContext) => Promise<void>;
@@ -61,7 +62,22 @@ export const InboundCallEffectsImplementation: Record<keyof InboundCallEffectSha
        });
 
         setPaginatedSearchData(context, result, pageNumber);
-    }
+    },
+
+    /**
+     * Implementation of the effect for creating a new case based on user input.
+     * @param {Deps} deps - The dependencies required for the effect.
+     * @returns {(context: EffectFunctionContext) => Promise<void>} Effect function bound to dependencies.
+     */
+    CreateCase: (deps: Deps) => async (context: EffectFunctionContext) => {
+        console.log("Creating case with payload:", getCreateCasePayloadFromAnswers(context));
+       const authenticatedAxiosState = getAuthenticatedAxios(context);
+       const payload = getCreateCasePayloadFromAnswers(context);
+
+       const result = await deps.caseApi.createCase(authenticatedAxiosState, payload);
+       context.setData("createdCase", result);
+       context.setData("createdCaseRef", result?.reference ?? "");
+    },
 };
 
 export const InboundCallEffectsRegistry = new EffectRegistry<Deps>();
@@ -70,4 +86,5 @@ export const InboundCallEffects: InboundCallEffectShape = {
     GetAllCases: InboundCallEffectsRegistry.register("GetAllCases", InboundCallEffectsImplementation.GetAllCases),
     SearchCase: InboundCallEffectsRegistry.register("SearchCase", InboundCallEffectsImplementation.SearchCase),
     SearchCasePagination: InboundCallEffectsRegistry.register("SearchCasePagination", InboundCallEffectsImplementation.SearchCasePagination),
+    CreateCase: InboundCallEffectsRegistry.register("CreateCase", InboundCallEffectsImplementation.CreateCase),
 }
