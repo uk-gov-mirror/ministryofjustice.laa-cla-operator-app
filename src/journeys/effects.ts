@@ -1,6 +1,6 @@
 import type { Deps } from "#src/journeys/api.js";
 import { type EffectFunctionExpr, type EffectFunctionContext, EffectRegistry } from "@ministryofjustice/hmpps-forge/core/authoring";
-import { FIRST_PAGE, getAuthenticatedAxios, getPageNumberFromQuery, getSearchParamFromAnswers, setPaginatedSearchData, SEARCH_PAGE_SIZE } from "#src/journeys/helpers/effectHelpers.js";
+import { FIRST_PAGE, getAuthenticatedAxios, getPageNumberFromQuery, getSearchParamFromAnswers, setPaginatedSearchData, SEARCH_PAGE_SIZE, ZERO } from "#src/journeys/helpers/effectHelpers.js";
 
 
 export interface InboundCallEffectShape {
@@ -33,17 +33,16 @@ export const InboundCallEffectsImplementation: Record<keyof InboundCallEffectSha
      * @returns {(context: EffectFunctionContext) => Promise<void>} Effect function bound to dependencies.
      */
     SearchCases: (deps: Deps) => async (context: EffectFunctionContext) => {
-       const authenticatedAxiosState = getAuthenticatedAxios(context);
-       const searchParam = getSearchParamFromAnswers(context).trim();
+        const authenticatedAxiosState = getAuthenticatedAxios(context);
+        const searchParam = getSearchParamFromAnswers(context).trim();
 
-       if (!searchParam) return;
-
+        if (searchParam.length === ZERO) return;
         context.setData("searchParam", searchParam);
         const result = await deps.caseApi.searchCases(authenticatedAxiosState, {
-           query: searchParam,
-           pageSize: SEARCH_PAGE_SIZE,
-           pageNumber: FIRST_PAGE,
-       });
+            query: searchParam,
+            pageSize: SEARCH_PAGE_SIZE,
+            pageNumber: FIRST_PAGE,
+        });
 
         setPaginatedSearchData(context, result, FIRST_PAGE);
     },
@@ -54,12 +53,12 @@ export const InboundCallEffectsImplementation: Record<keyof InboundCallEffectSha
      * @returns {(context: EffectFunctionContext) => Promise<void>} Effect function bound to dependencies.
      */
     SearchCasesPagination: (deps: Deps) => async (context: EffectFunctionContext) => {
-       const authenticatedAxiosState = getAuthenticatedAxios(context);
-       const rawQ = context.getQueryParam("q");
-        const queryFromUrl = Array.isArray(rawQ) ? rawQ[0] : rawQ;
+        const authenticatedAxiosState = getAuthenticatedAxios(context);
+        const rawQ = context.getQueryParam("q");
+        const queryFromUrl = Array.isArray(rawQ) ? rawQ[ZERO] : rawQ;
         const searchParam = (queryFromUrl ?? "").trim();
 
-        if (!searchParam) return;
+       if (searchParam.length === ZERO) return;
 
        context.setData("searchParam", searchParam);
     
