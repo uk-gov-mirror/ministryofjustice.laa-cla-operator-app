@@ -1,8 +1,8 @@
 import {
   journey,
 } from "@ministryofjustice/hmpps-forge/core/authoring";
-import { whosCallingStep } from "./whos-calling/whosCallingStep.js";
-import { searchClientStep } from "./search-client/searchClientStep.js";
+import { whosCallingStep } from "./whos-calling/step.js";
+import { searchClientStep } from "./search-client/step.js";
     
 
 // Define the journey
